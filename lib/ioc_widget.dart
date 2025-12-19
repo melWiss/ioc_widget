@@ -1,5 +1,119 @@
-/// A Calculator.
-class Calculator {
-  /// Returns [value] plus 1.
-  int addOne(int value) => value + 1;
+import 'package:flutter/material.dart';
+
+// ignore: must_be_immutable
+class InternalIocInheritedWidget<T> extends InheritedWidget {
+  final T Function(BuildContext context) factory;
+  final bool isLazySingleton;
+  InternalIocInheritedWidget({
+    required this.factory,
+    required super.child,
+    this.isLazySingleton = false,
+    super.key,
+  });
+
+  T? _value;
+
+  T get(BuildContext context) {
+    if (isLazySingleton) return _value ??= factory(context);
+    return factory(context);
+  }
+
+  @override
+  bool updateShouldNotify(InternalIocInheritedWidget<T> old) => false;
+}
+
+class IocWidget<T> extends StatelessWidget {
+  final T Function(BuildContext context) factory;
+  final Widget? child;
+  final bool isLazySingleton;
+
+  const IocWidget({
+    required this.factory,
+    this.child,
+    super.key,
+    this.isLazySingleton = false,
+  });
+
+  Widget _wrap(Widget other) {
+    return IocWidget<T>(
+      factory: factory,
+      isLazySingleton: isLazySingleton,
+      child: other,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (child == null) return SizedBox.shrink();
+    return InternalIocInheritedWidget<T>(
+      factory: this.factory,
+      isLazySingleton: isLazySingleton,
+      child: child!,
+    );
+  }
+
+  static T? maybeOf<T>(BuildContext context) {
+    InternalIocInheritedWidget<T>? dependencyWidget =
+        context
+                .getElementForInheritedWidgetOfExactType<
+                  InternalIocInheritedWidget<T>
+                >()
+                ?.widget
+            as InternalIocInheritedWidget<T>?;
+    if (dependencyWidget == null) return null;
+    return dependencyWidget.get(context);
+  }
+
+  static T of<T>(BuildContext context) {
+    T? dependency = maybeOf<T>(context);
+    assert(
+      dependency != null,
+      "The requested dependency <$T> is not registered in the widget tree.",
+    );
+    return dependency!;
+  }
+}
+
+class InjectableWidget<T> extends IocWidget<T> {
+  const InjectableWidget({required super.factory, super.child, super.key})
+    : super(isLazySingleton: false);
+}
+
+class LazySingletonWidget<T> extends IocWidget<T> {
+  const LazySingletonWidget({required super.factory, super.child, super.key})
+    : super(isLazySingleton: true);
+}
+
+class MultiIocWidget extends StatelessWidget {
+  final List<IocWidget> dependencies;
+  final Widget child;
+
+  const MultiIocWidget({
+    super.key,
+    required this.dependencies,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // we need to loop over the dependencies and extract the factory and lazy sinleton property from it
+    // then construct a nested widget tree by looping over those dependencies
+    // and it should NOT be recursive.
+
+    return buildDependencyTree(dependencies);
+  }
+
+  Widget buildDependencyTree(List<IocWidget> deps) {
+    Widget current = child;
+
+    for (final dep in deps.reversed) {
+      current = dep._wrap(current);
+    }
+
+    return current;
+  }
+}
+
+extension IocGetExtension on BuildContext {
+  T get<T>() => IocWidget.of(this);
 }
