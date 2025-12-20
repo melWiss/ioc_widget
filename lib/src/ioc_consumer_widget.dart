@@ -8,6 +8,7 @@ import 'package:ioc_widget/src/internal_ioc_widgets.dart';
 class IocConsumer<T> extends StatefulWidget {
   /// The builder function that receives the [BuildContext].
   final Widget Function(BuildContext context) builder;
+
   /// Creates an [IocConsumer] widget.
   const IocConsumer({required this.builder, super.key});
 
@@ -29,7 +30,7 @@ class _IocConsumerState<T> extends State<IocConsumer<T>> {
     return LazySingletonWidget<T>(
       factory: dependency.factory,
       dispose: dependency.dispose,
-      child: widget.builder(context),
+      child: Builder(builder: widget.builder),
     );
   }
 }

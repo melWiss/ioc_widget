@@ -3,8 +3,8 @@ import 'package:ioc_widget/ioc_widget.dart';
 
 /// Example class to demonstrate dependency injection.
 class ClassA {
-  void talk() {
-    print("I'm Class A! $hashCode");
+  String talk() {
+    return "I'm Class A! $hashCode";
   }
 }
 
@@ -13,9 +13,18 @@ class ClassB {
   final ClassA classA;
   const ClassB(this.classA);
 
-  void talk() {
-    print("I'm Class B! $hashCode");
-    print("And I'm Class A! ${classA.hashCode}");
+  String talk() {
+    return "I'm Class B! $hashCode\nAnd I'm Class A! ${classA.hashCode}";
+  }
+}
+
+/// Example class that depends on [ClassB].
+class ClassC {
+  final ClassB classB;
+  const ClassC(this.classB);
+
+  String talk() {
+    return "I'm Class C! $hashCode\n" + classB.talk();
   }
 }
 
@@ -23,7 +32,7 @@ void main() {
   runApp(const MyApp());
 }
 
-/// Example usage of the IoC widget system.
+/// Example usage of the IoC widget system with navigation and all public components.
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -31,41 +40,140 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const Body(),
-      builder: (_, child) => MultiIocWidget(
-        dependencies: [
-          // Register ClassA as a transient (new instance each time)
-          InjectableWidget<ClassA>(factory: (_) => ClassA()),
-          // Register ClassB as a lazy singleton (same instance for the subtree)
-          LazySingletonWidget<ClassB>(factory: (ctx) => ClassB(ctx.get())),
-        ],
-        child: child!,
+      initialRoute: '/',
+      routes: {
+        '/': (_) => const PageA(),
+        '/b': (_) => const PageB(),
+        '/c': (_) => const PageC(),
+      },
+      builder:
+          (_, child) => MultiIocWidget(
+            dependencies: [
+              // Register ClassA as a transient (new instance each time)
+              InjectableWidget<ClassA>(factory: (_) => ClassA()),
+              // Register ClassB as a lazy singleton (same instance for the subtree)
+              LazySingletonWidget<ClassB>(factory: (ctx) => ClassB(ctx.get())),
+              // Register ClassC as a lazy singleton (to show deeper dependency)
+              LazySingletonWidget<ClassC>(factory: (ctx) => ClassC(ctx.get())),
+            ],
+            child: child!,
+          ),
+    );
+  }
+}
+
+class PageA extends StatelessWidget {
+  const PageA({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Page A - InjectableWidget')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('ClassA is injected as a transient.'),
+            ElevatedButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('ClassA: ${context.get<ClassA>().talk()}'),
+                  ),
+                );
+              },
+              child: const Text('Talk (ClassA)'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pushNamed(context, '/b'),
+              child: const Text('Go to Page B'),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class Body extends StatelessWidget {
-  const Body({super.key});
+class PageB extends StatelessWidget {
+  const PageB({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Retrieve multiple instances of ClassA (should have different hashCodes)
-    final a1 = context.get<ClassA>();
-    final a2 = context.get<ClassA>();
-    a1.talk();
-    a2.talk();
+    return Scaffold(
+      appBar: AppBar(title: const Text('Page B - LazySingletonWidget')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('ClassB is injected as a lazy singleton.'),
+            ElevatedButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('ClassB: ${context.get<ClassB>().talk()}'),
+                  ),
+                );
+              },
+              child: const Text('Talk (ClassB)'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pushNamed(context, '/c'),
+              child: const Text('Go to Page C'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Back to Page A'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-    // Retrieve ClassB (should be the same instance each time)
-    final b1 = context.get<ClassB>();
-    final b2 = context.get<ClassB>();
-    b1.talk();
-    b2.talk();
+class PageC extends StatelessWidget {
+  const PageC({super.key});
 
-    return const Center(
-      child: Text(
-        'Check the console output for IoC widget usage example.',
-        textAlign: TextAlign.center,
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Page C - IocConsumer')),
+      body: Center(
+        child: IocConsumer<ClassA>(
+          builder: (ctx) {
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('ClassC is injected using IocConsumer.'),
+                ElevatedButton(
+                  onPressed: () {
+                    ScaffoldMessenger.of(ctx).showSnackBar(
+                      SnackBar(
+                        content: Text('ClassC: ${ctx.get<ClassC>().talk()}'),
+                      ),
+                    );
+                  },
+                  child: const Text('Talk (ClassC)'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    ScaffoldMessenger.of(ctx).showSnackBar(
+                      SnackBar(
+                        content: Text('ClassA: ${ctx.get<ClassA>().talk()}'),
+                      ),
+                    );
+                  },
+                  child: const Text('Talk (ClassA)'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Back to Page B'),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
