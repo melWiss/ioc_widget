@@ -2,8 +2,13 @@ import 'package:flutter/widgets.dart';
 import 'package:ioc_widget/ioc_widget.dart';
 import 'package:ioc_widget/src/internal_ioc_widgets.dart';
 
+/// A widget that consumes a dependency of type [T] from the widget tree.
+///
+/// The [builder] function provides the [BuildContext] to build the widget subtree.
 class IocConsumer<T> extends StatefulWidget {
+  /// The builder function that receives the [BuildContext].
   final Widget Function(BuildContext context) builder;
+  /// Creates an [IocConsumer] widget.
   const IocConsumer({required this.builder, super.key});
 
   @override
