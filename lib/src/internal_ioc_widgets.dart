@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 // ignore: must_be_immutable
 class InternalIocInheritedWidget<T> extends InheritedWidget {
   final T Function(BuildContext context) factory;
+  final void Function()? dispose;
   final bool isLazySingleton;
   InternalIocInheritedWidget({
     required this.factory,
     required super.child,
     this.isLazySingleton = false,
+    this.dispose,
     super.key,
   });
 
@@ -60,6 +62,28 @@ class IocWidget<T> extends StatefulWidget {
     return dependency!;
   }
 
+  static InternalIocInheritedWidget<T>? maybeContainerOf<T>(
+    BuildContext context,
+  ) {
+    return context
+            .getElementForInheritedWidgetOfExactType<
+              InternalIocInheritedWidget<T>
+            >()
+            ?.widget
+        as InternalIocInheritedWidget<T>?;
+  }
+
+  static InternalIocInheritedWidget<T> containerOf<T>(BuildContext context) {
+    InternalIocInheritedWidget<T>? nullableContainer = maybeContainerOf(
+      context,
+    );
+    assert(
+      nullableContainer != null,
+      "The requested container InternalIocInheritedWidget<$T>? is not registered in the widget tree.",
+    );
+    return nullableContainer!;
+  }
+
   Widget _wrap(Widget other) {
     return IocWidget<T>(
       factory: factory,
@@ -84,6 +108,7 @@ class _IocWidgetState<T> extends State<IocWidget<T>> {
     return InternalIocInheritedWidget<T>(
       factory: widget.factory,
       isLazySingleton: widget.isLazySingleton,
+      dispose: widget.dispose,
       child: widget.child!,
     );
   }
