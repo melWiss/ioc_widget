@@ -22,8 +22,9 @@ class InternalIocInheritedWidget<T> extends InheritedWidget {
   bool updateShouldNotify(InternalIocInheritedWidget<T> old) => false;
 }
 
-class IocWidget<T> extends StatelessWidget {
+class IocWidget<T> extends StatefulWidget {
   final T Function(BuildContext context) factory;
+  final Function()? dispose;
   final Widget? child;
   final bool isLazySingleton;
 
@@ -32,25 +33,11 @@ class IocWidget<T> extends StatelessWidget {
     this.child,
     super.key,
     this.isLazySingleton = false,
+    this.dispose,
   });
 
-  Widget _wrap(Widget other) {
-    return IocWidget<T>(
-      factory: factory,
-      isLazySingleton: isLazySingleton,
-      child: other,
-    );
-  }
-
   @override
-  Widget build(BuildContext context) {
-    if (child == null) return SizedBox.shrink();
-    return InternalIocInheritedWidget<T>(
-      factory: this.factory,
-      isLazySingleton: isLazySingleton,
-      child: child!,
-    );
-  }
+  State<IocWidget<T>> createState() => _IocWidgetState<T>();
 
   static T? maybeOf<T>(BuildContext context) {
     InternalIocInheritedWidget<T>? dependencyWidget =
@@ -71,6 +58,34 @@ class IocWidget<T> extends StatelessWidget {
       "The requested dependency <$T> is not registered in the widget tree.",
     );
     return dependency!;
+  }
+
+  Widget _wrap(Widget other) {
+    return IocWidget<T>(
+      factory: factory,
+      isLazySingleton: isLazySingleton,
+      dispose: dispose,
+      child: other,
+    );
+  }
+}
+
+class _IocWidgetState<T> extends State<IocWidget<T>> {
+  @override
+  void dispose() {
+    if (widget.isLazySingleton) {
+      widget.dispose?.call();
+    }
+    super.dispose();
+  }
+  @override
+  Widget build(BuildContext context) {
+    if (widget.child == null) return SizedBox.shrink();
+    return InternalIocInheritedWidget<T>(
+      factory: widget.factory,
+      isLazySingleton: widget.isLazySingleton,
+      child: widget.child!,
+    );
   }
 }
 
