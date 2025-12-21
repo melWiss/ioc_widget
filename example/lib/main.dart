@@ -24,7 +24,7 @@ class ClassC {
   const ClassC(this.classB);
 
   String talk() {
-    return "I'm Class C! $hashCode\n" + classB.talk();
+    return "I'm Class C! $hashCode\n${classB.talk()}";
   }
 }
 
@@ -58,6 +58,10 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(builder: (_) => const PageC());
           case '/notifier':
             return MaterialPageRoute(builder: (_) => const PageNotifier());
+          case '/external':
+            return MaterialPageRoute(builder: (_) => const PageExternalValue());
+          case '/external-notifier':
+            return MaterialPageRoute(builder: (_) => const PageNotifierExternal());
           default:
             return null;
         }
@@ -107,6 +111,10 @@ class PageA extends StatelessWidget {
             ElevatedButton(
               onPressed: () => Navigator.pushNamed(context, '/notifier'),
               child: const Text('Go to Notifier Page'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pushNamed(context, '/external'),
+              child: const Text('Go to External Value Page'),
             ),
           ],
         ),
@@ -242,6 +250,66 @@ class PageNotifier extends StatelessWidget {
                   ),
                 ],
               ),
+        ),
+      ),
+    );
+  }
+}
+
+class PageExternalValue extends StatelessWidget {
+  const PageExternalValue({super.key});
+  @override
+  Widget build(BuildContext context) {
+    final externalA = ClassA();
+    return Scaffold(
+      appBar: AppBar(title: const Text('Page - InjectScopedDependency (external value)')),
+      body: Center(
+        child: InjectScopedDependency<ClassA>(
+          value: externalA,
+          builder: (ctx) => Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Injected external ClassA: ${ctx.get<ClassA>().talk()}'),
+              ElevatedButton(
+                onPressed: () => Navigator.pushNamed(ctx, '/external-notifier'),
+                child: const Text('External Notifier'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Back'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class PageNotifierExternal extends StatelessWidget {
+  const PageNotifierExternal({super.key});
+  @override
+  Widget build(BuildContext context) {
+    final externalNotifier = CounterNotifier();
+    return Scaffold(
+      appBar: AppBar(title: const Text('Page Notifier - InjectScopedNotifier (external value)')),
+      body: Center(
+        child: InjectScopedNotifier<CounterNotifier>(
+          value: externalNotifier,
+          builder: (ctx, notifier) => Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Counter value: ${notifier.value}', style: const TextStyle(fontSize: 24)),
+              ElevatedButton(
+                onPressed: notifier.increment,
+                child: const Text('Increment'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Back'),
+              ),
+            ],
+          ),
         ),
       ),
     );

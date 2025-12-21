@@ -8,6 +8,6 @@ extension IocGetExtension on BuildContext {
 
   /// Retrieves the dependency container of type [T] from the nearest IoC provider
   /// in the widget tree.
-  InternalIocInheritedWidget<T> getContainer<T>() =>
+  InternalIocInheritedWidget<T> getDependencyContainer<T>() =>
       IocWidget.containerOf(this);
 }
