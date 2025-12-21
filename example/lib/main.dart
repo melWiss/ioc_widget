@@ -62,15 +62,18 @@ class MyApp extends StatelessWidget {
             return null;
         }
       },
-      builder: (_, child) => MultiIocWidget(
-        dependencies: [
-          InjectableWidget<ClassA>(factory: (_) => ClassA()),
-          LazySingletonWidget<ClassB>(factory: (ctx) => ClassB(ctx.get())),
-          LazySingletonWidget<ClassC>(factory: (ctx) => ClassC(ctx.get())),
-          InjectableWidget<CounterNotifier>(factory: (_) => CounterNotifier()),
-        ],
-        child: child ?? const SizedBox.shrink(),
-      ),
+      builder:
+          (_, child) => MultiIocWidget(
+            dependencies: [
+              InjectableWidget<ClassA>(factory: (_) => ClassA()),
+              LazySingletonWidget<ClassB>(factory: (ctx) => ClassB(ctx.get())),
+              LazySingletonWidget<ClassC>(factory: (ctx) => ClassC(ctx.get())),
+              InjectableWidget<CounterNotifier>(
+                factory: (_) => CounterNotifier(),
+              ),
+            ],
+            child: child ?? const SizedBox.shrink(),
+          ),
     );
   }
 }
@@ -196,52 +199,49 @@ class PageC extends StatelessWidget {
   }
 }
 
-class PageNotifier extends StatefulWidget {
+class PageNotifier extends StatelessWidget {
   const PageNotifier({super.key});
 
-  @override
-  State<PageNotifier> createState() => _PageNotifierState();
-}
-
-class _PageNotifierState extends State<PageNotifier> {
-
-  @override
-  void dispose() {
-    // TODO: implement dispose
-    super.dispose();
-  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Page Notifier - InjectScopedNotifier')),
       body: Center(
         child: InjectScopedNotifier<CounterNotifier>(
-          builder: (ctx, notifier) => Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('Counter value: ${notifier.value}', style: const TextStyle(fontSize: 24)),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: notifier.increment,
-                child: const Text('Increment'),
+          builder:
+              (ctx, notifier) => Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Counter value: ${notifier.value}',
+                    style: const TextStyle(fontSize: 24),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: notifier.increment,
+                    child: const Text('Increment'),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Back'),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      final notifierFromContext = ctx.get<CounterNotifier>();
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Notifier hashCode: ${notifierFromContext.hashCode}',
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text('Show Notifier HashCode'),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Back'),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  final notifierFromContext = ctx.get<CounterNotifier>();
-                  ScaffoldMessenger.of(ctx).showSnackBar(
-                    SnackBar(content: Text('Notifier hashCode: ${notifierFromContext.hashCode}')),
-                  );
-                },
-                child: const Text('Show Notifier HashCode'),
-              ),
-            ],
-          ),
         ),
       ),
     );
