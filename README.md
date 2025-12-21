@@ -36,6 +36,7 @@ dependencies:
 - **LazySingletonWidget**: Provides a single instance of a dependency for the subtree, created on first use.
 - **MultiIocWidget**: Register multiple dependencies at once.
 - **InjectScopedDependency**: Injects dependencies in context widget tree and handles its dispose callback. (Renamed from IocConsumer in v2.0.0)
+- **InjectScopedNotifier**: Injects a ChangeNotifier from the IoC container, rebuilds when the notifier updates, and disposes it automatically when removed from the tree.
 - **context.get<T>()**: Retrieve a dependency of type `T` from the nearest provider.
 
 ## Usage Example
@@ -81,6 +82,7 @@ class MyApp extends StatelessWidget {
           InjectableWidget<ClassA>(factory: (_) => ClassA()),
           LazySingletonWidget<ClassB>(factory: (ctx) => ClassB(ctx.get())),
           LazySingletonWidget<ClassC>(factory: (ctx) => ClassC(ctx.get())),
+          InjectableWidget<CounterNotifier>(factory: (_) => CounterNotifier()),
         ],
         child: child!,
       ),
@@ -193,6 +195,55 @@ class PageC extends StatelessWidget {
     );
   }
 }
+
+class CounterNotifier extends ChangeNotifier {
+  int value = 0;
+  void increment() {
+    value++;
+    notifyListeners();
+  }
+}
+
+class PageNotifier extends StatelessWidget {
+  const PageNotifier({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Page Notifier - InjectScopedNotifier')),
+      body: Center(
+        child: InjectScopedNotifier<CounterNotifier>(
+          builder: (ctx, notifier) => Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Counter value: ${notifier.value}', style: const TextStyle(fontSize: 24)),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: notifier.increment,
+                child: const Text('Increment'),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  final notifierFromContext = ctx.get<CounterNotifier>();
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(content: Text('Notifier hashCode: ${notifierFromContext.hashCode}')),
+                  );
+                },
+                child: const Text('Show Notifier HashCode'),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Back'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 ```
 
 ## API Reference
@@ -208,6 +259,9 @@ Registers multiple dependencies at once. Useful for grouping related dependencie
 
 ### InjectScopedDependency<T>
 Widget that exposes a dependency in its context widget tree as a singleton and gets disposed when its parent is disposed. (Renamed from IocConsumer in v2.0.0)
+
+### InjectScopedNotifier<T extends ChangeNotifier>
+Widget that injects a ChangeNotifier from the IoC container, rebuilds when the notifier updates, and disposes it automatically when removed from the tree. The notifier instance is a singleton within the widget scope and changes when the widget is disposed/recreated.
 
 ### context.get<T>()
 Extension on `BuildContext` to retrieve a dependency of type `T` from the nearest provider.
@@ -265,6 +319,8 @@ testWidgets('InjectScopedDependency exposes a new instance in its scope', (teste
 
 - `LazySingletonWidget` supports a `dispose` callback for cleaning up resources when the widget is removed from the tree.
 - `InjectableWidget` does not call `dispose` (since it creates new instances each time) so you should either explicitly call the dispose method of that specific instance or safely dispose it by mixing it with the `InjectScopedDependency` widget.
+- `InjectScopedNotifier` automatically disposes the ChangeNotifier when the widget is removed from the tree.
+- The notifier is a singleton within the widget scope and will be recreated if the widget is disposed and rebuilt.
 
 ## When to use
 - When you want explicit, widget-scoped dependency injection.
