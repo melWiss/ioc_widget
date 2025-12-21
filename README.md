@@ -2,6 +2,16 @@
 
 A simple, flexible, and testable dependency injection (DI) solution for Flutter, inspired by the best of both the Provider and get_it packages. This package is designed for widget-level dependency injection, supporting both transient (injectable) and singleton (lazy) strategies, and is ideal for managing dependencies in a scalable, testable, and maintainable way.
 
+## Motivation
+
+We already have the Provider package that somehow handles dependency injection and it's perfect.
+
+My only issue with Provider is the easy misuse of it. When you go in the Flutter official docs, they suggest using Provider as a simple state manegement package alongsie the fact that it can work as a dependency injection mechanism.
+
+However in the guide, it's suggested that you have all the list of your providers on the root level of your app, this results in all provided classes to be singletons which is not a realistic case scenario.
+
+So, how about we have something with the same simplicity as Provider but it can provide singletons and new instances everytime you get the dependency just like get_it?
+
 ## Why use ioc_widget?
 
 Use this package if you want:
@@ -25,7 +35,7 @@ dependencies:
 - **InjectableWidget**: Provides a new instance of a dependency every time it is requested.
 - **LazySingletonWidget**: Provides a single instance of a dependency for the subtree, created on first use.
 - **MultiIocWidget**: Register multiple dependencies at once.
-- **IocConsumer**: Access dependencies in a builder context, with optional rebuilds.
+- **IocConsumer**: Injects dependencies in context widget tree and handles it's dispose callback.
 - **context.get<T>()**: Retrieve a dependency of type `T` from the nearest provider.
 
 ## Usage Example
@@ -197,7 +207,7 @@ Provides a single instance of `T` for the subtree, created on first use.
 Registers multiple dependencies at once. Useful for grouping related dependencies.
 
 ### IocConsumer<T>
-Widget that exposes a dependency in its builder context, allowing for fine-grained rebuilds and access.
+Widget that exposes a dependency in its context widget tree as a singleton and gets disposed when it's parent is disposed.
 
 ### context.get<T>()
 Extension on `BuildContext` to retrieve a dependency of type `T` from the nearest provider.
