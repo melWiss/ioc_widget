@@ -13,15 +13,17 @@ class InjectScopedDependency<T> extends StatefulWidget {
   const InjectScopedDependency({required this.builder, super.key});
 
   @override
-  State<InjectScopedDependency<T>> createState() => _InjectScopedDependencyState<T>();
+  State<InjectScopedDependency<T>> createState() =>
+      _InjectScopedDependencyState<T>();
 }
 
 class _InjectScopedDependencyState<T> extends State<InjectScopedDependency<T>> {
   late InternalIocInheritedWidget<T> dependency;
+  late T value;
 
   @override
   void initState() {
-    dependency = IocWidget.containerOf(context);
+    dependency = context.getContainer<T>();
     super.initState();
   }
 
@@ -29,8 +31,20 @@ class _InjectScopedDependencyState<T> extends State<InjectScopedDependency<T>> {
   Widget build(BuildContext context) {
     return LazySingletonWidget<T>(
       factory: dependency.factory,
-      dispose: dependency.dispose,
-      child: Builder(builder: widget.builder),
+      dispose: () {
+        dependency.dispose?.call();
+        if (value is ChangeNotifier) {
+          try {
+            (value as ChangeNotifier).dispose();
+          } catch (_) {}
+        }
+      },
+      child: Builder(
+        builder: (ctx) {
+          value = ctx.get();
+          return widget.builder(ctx);
+        },
+      ),
     );
   }
 }

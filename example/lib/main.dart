@@ -28,6 +28,14 @@ class ClassC {
   }
 }
 
+class CounterNotifier extends ChangeNotifier {
+  int value = 0;
+  void increment() {
+    value++;
+    notifyListeners();
+  }
+}
+
 void main() {
   runApp(const MyApp());
 }
@@ -40,24 +48,29 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: '/',
-      routes: {
-        '/': (_) => const PageA(),
-        '/b': (_) => const PageB(),
-        '/c': (_) => const PageC(),
+      onGenerateRoute: (settings) {
+        switch (settings.name) {
+          case '/':
+            return MaterialPageRoute(builder: (_) => const PageA());
+          case '/b':
+            return MaterialPageRoute(builder: (_) => const PageB());
+          case '/c':
+            return MaterialPageRoute(builder: (_) => const PageC());
+          case '/notifier':
+            return MaterialPageRoute(builder: (_) => const PageNotifier());
+          default:
+            return null;
+        }
       },
-      builder:
-          (_, child) => MultiIocWidget(
-            dependencies: [
-              // Register ClassA as a transient (new instance each time)
-              InjectableWidget<ClassA>(factory: (_) => ClassA()),
-              // Register ClassB as a lazy singleton (same instance for the subtree)
-              LazySingletonWidget<ClassB>(factory: (ctx) => ClassB(ctx.get())),
-              // Register ClassC as a lazy singleton (to show deeper dependency)
-              LazySingletonWidget<ClassC>(factory: (ctx) => ClassC(ctx.get())),
-            ],
-            child: child!,
-          ),
+      builder: (_, child) => MultiIocWidget(
+        dependencies: [
+          InjectableWidget<ClassA>(factory: (_) => ClassA()),
+          LazySingletonWidget<ClassB>(factory: (ctx) => ClassB(ctx.get())),
+          LazySingletonWidget<ClassC>(factory: (ctx) => ClassC(ctx.get())),
+          InjectableWidget<CounterNotifier>(factory: (_) => CounterNotifier()),
+        ],
+        child: child ?? const SizedBox.shrink(),
+      ),
     );
   }
 }
@@ -87,6 +100,10 @@ class PageA extends StatelessWidget {
             ElevatedButton(
               onPressed: () => Navigator.pushNamed(context, '/b'),
               child: const Text('Go to Page B'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pushNamed(context, '/notifier'),
+              child: const Text('Go to Notifier Page'),
             ),
           ],
         ),
@@ -173,6 +190,58 @@ class PageC extends StatelessWidget {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+class PageNotifier extends StatefulWidget {
+  const PageNotifier({super.key});
+
+  @override
+  State<PageNotifier> createState() => _PageNotifierState();
+}
+
+class _PageNotifierState extends State<PageNotifier> {
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+  }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Page Notifier - InjectScopedNotifier')),
+      body: Center(
+        child: InjectScopedNotifier<CounterNotifier>(
+          builder: (ctx, notifier) => Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Counter value: ${notifier.value}', style: const TextStyle(fontSize: 24)),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: notifier.increment,
+                child: const Text('Increment'),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Back'),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  final notifierFromContext = ctx.get<CounterNotifier>();
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(content: Text('Notifier hashCode: ${notifierFromContext.hashCode}')),
+                  );
+                },
+                child: const Text('Show Notifier HashCode'),
+              ),
+            ],
+          ),
         ),
       ),
     );
