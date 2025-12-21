@@ -138,14 +138,14 @@ class PageC extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Page C - IocConsumer')),
+      appBar: AppBar(title: const Text('Page C - InjectScopedDependency')),
       body: Center(
-        child: IocConsumer<ClassA>(
+        child: InjectScopedDependency<ClassA>(
           builder: (ctx) {
             return Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('ClassC is injected using IocConsumer.'),
+                const Text('ClassC is injected using InjectScopedDependency.'),
                 ElevatedButton(
                   onPressed: () {
                     ScaffoldMessenger.of(ctx).showSnackBar(

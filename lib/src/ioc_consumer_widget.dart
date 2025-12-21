@@ -2,21 +2,21 @@ import 'package:flutter/widgets.dart';
 import 'package:ioc_widget/ioc_widget.dart';
 import 'package:ioc_widget/src/internal_ioc_widgets.dart';
 
-/// A widget that consumes a dependency of type [T] from the widget tree.
+/// A widget that injects a scoped dependency of type [T] into the widget tree.
 ///
 /// The [builder] function provides the [BuildContext] to build the widget subtree.
-class IocConsumer<T> extends StatefulWidget {
+class InjectScopedDependency<T> extends StatefulWidget {
   /// The builder function that receives the [BuildContext].
   final Widget Function(BuildContext context) builder;
 
-  /// Creates an [IocConsumer] widget.
-  const IocConsumer({required this.builder, super.key});
+  /// Creates an [InjectScopedDependency] widget.
+  const InjectScopedDependency({required this.builder, super.key});
 
   @override
-  State<IocConsumer<T>> createState() => _IocConsumerState<T>();
+  State<InjectScopedDependency<T>> createState() => _InjectScopedDependencyState<T>();
 }
 
-class _IocConsumerState<T> extends State<IocConsumer<T>> {
+class _InjectScopedDependencyState<T> extends State<InjectScopedDependency<T>> {
   late InternalIocInheritedWidget<T> dependency;
 
   @override

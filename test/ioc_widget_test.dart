@@ -76,7 +76,7 @@ void main() {
       expect(contextC.get<ClassC>(), isA<ClassC>());
     });
 
-    testWidgets('IocConsumer provides dependency in builder context', (tester) async {
+    testWidgets('InjectScopedDependency provides dependency in builder context', (tester) async {
       await tester.pumpWidget(const MyApp());
       // Go to PageB
       await tester.tap(find.text('Go to Page B'));
@@ -84,8 +84,8 @@ void main() {
       // Go to PageC
       await tester.tap(find.text('Go to Page C'));
       await tester.pumpAndSettle();
-      // Find the IocConsumer builder context
-      final consumerFinder = find.byType(IocConsumer<ClassA>);
+      // Find the InjectScopedDependency builder context
+      final consumerFinder = find.byType(InjectScopedDependency<ClassA>);
       expect(consumerFinder, findsOneWidget);
       final ctx = tester.element(consumerFinder);
       expect(ctx.get<ClassA>(), isA<ClassA>());
@@ -101,7 +101,7 @@ void main() {
       // PageB -> PageC
       await tester.tap(find.text('Go to Page C'));
       await tester.pumpAndSettle();
-      expect(find.text('Page C - IocConsumer'), findsOneWidget);
+      expect(find.text('Page C - InjectScopedDependency'), findsOneWidget);
       // PageC -> PageB
       await tester.tap(find.text('Back to Page B'));
       await tester.pumpAndSettle();
@@ -149,7 +149,7 @@ void main() {
     expect(TestClass.instanceCount, 1);
   });
 
-  testWidgets('IocConsumer exposes a new instance in its scope', (tester) async {
+  testWidgets('InjectScopedDependency exposes a new instance in its scope', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: InjectableWidget<TestClass>(
@@ -157,7 +157,7 @@ void main() {
           child: Builder(
             builder: (ctx) {
               final _ = ctx.get<TestClass>();
-              return IocConsumer<TestClass>(
+              return InjectScopedDependency<TestClass>(
                 builder: (ctx) {
                   final a = ctx.get<TestClass>();
                   final b = ctx.get<TestClass>();
@@ -174,12 +174,12 @@ void main() {
     expect(TestClass.instanceCount, 2);
   });
 
-  testWidgets('IocConsumer exposes the same singleton instance in its scope', (tester) async {
+  testWidgets('InjectScopedDependency exposes the same singleton instance in its scope', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: LazySingletonWidget<TestClass>(
           factory: (_) => TestClass(),
-          child: IocConsumer<TestClass>(
+          child: InjectScopedDependency<TestClass>(
             builder: (ctx) {
               final a = ctx.get<TestClass>();
               final b = ctx.get<TestClass>();

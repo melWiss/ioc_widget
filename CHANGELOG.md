@@ -1,3 +1,9 @@
+## 2.0.0
+### Breaking Changes
+- Renamed `IocConsumer` widget to `InjectScopedDependency` for clarity and to avoid confusion with Provider's Consumer.
+- Updated all references in the codebase, example app, and tests to use `InjectScopedDependency`.
+- Updated documentation and API references accordingly.
+
 ## 1.0.0
 ### Added
 - Initial release of ioc_widget package.

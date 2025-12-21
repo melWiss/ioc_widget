@@ -35,7 +35,7 @@ dependencies:
 - **InjectableWidget**: Provides a new instance of a dependency every time it is requested.
 - **LazySingletonWidget**: Provides a single instance of a dependency for the subtree, created on first use.
 - **MultiIocWidget**: Register multiple dependencies at once.
-- **IocConsumer**: Injects dependencies in context widget tree and handles it's dispose callback.
+- **InjectScopedDependency**: Injects dependencies in context widget tree and handles its dispose callback. (Renamed from IocConsumer in v2.0.0)
 - **context.get<T>()**: Retrieve a dependency of type `T` from the nearest provider.
 
 ## Usage Example
@@ -157,14 +157,14 @@ class PageC extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Page C - IocConsumer')),
+      appBar: AppBar(title: const Text('Page C - InjectScopedDependency')),
       body: Center(
-        child: IocConsumer<ClassA>(
+        child: InjectScopedDependency<ClassA>(
           builder: (ctx) {
             return Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('ClassC is injected using IocConsumer.'),
+                const Text('ClassC is injected using InjectScopedDependency.'),
                 ElevatedButton(
                   onPressed: () {
                     ScaffoldMessenger.of(ctx).showSnackBar(
@@ -206,8 +206,8 @@ Provides a single instance of `T` for the subtree, created on first use.
 ### MultiIocWidget
 Registers multiple dependencies at once. Useful for grouping related dependencies.
 
-### IocConsumer<T>
-Widget that exposes a dependency in its context widget tree as a singleton and gets disposed when it's parent is disposed.
+### InjectScopedDependency<T>
+Widget that exposes a dependency in its context widget tree as a singleton and gets disposed when its parent is disposed. (Renamed from IocConsumer in v2.0.0)
 
 ### context.get<T>()
 Extension on `BuildContext` to retrieve a dependency of type `T` from the nearest provider.
@@ -235,13 +235,36 @@ testWidgets('InjectableWidget creates a new instance every time', (tester) async
   expect(TestClass.instanceCount, 2);
 });
 
-// See test/ioc_widget_test.dart for more scenarios.
+testWidgets('InjectScopedDependency exposes a new instance in its scope', (tester) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      home: InjectableWidget<TestClass>(
+        factory: (_) => TestClass(),
+        child: Builder(
+          builder: (ctx) {
+            final _ = ctx.get<TestClass>();
+            return InjectScopedDependency<TestClass>(
+              builder: (ctx) {
+                final a = ctx.get<TestClass>();
+                final b = ctx.get<TestClass>();
+                final c = ctx.get<TestClass>();
+                return Text('${a.hashCode}-${b.hashCode}-${c.hashCode}');
+              },
+            );
+          }
+        ),
+      ),
+    ),
+  );
+  // Should create two instances (one for each get)
+  expect(TestClass.instanceCount, 2);
+});
 ```
 
 ## Lifecycle & Disposal
 
 - `LazySingletonWidget` supports a `dispose` callback for cleaning up resources when the widget is removed from the tree.
-- `InjectableWidget` does not call `dispose` (since it creates new instances each time) so you should either explicitly call the dispose method of that specific instance or safely dispose it by mixing it with the `IocConsumer` widget.
+- `InjectableWidget` does not call `dispose` (since it creates new instances each time) so you should either explicitly call the dispose method of that specific instance or safely dispose it by mixing it with the `InjectScopedDependency` widget.
 
 ## When to use
 - When you want explicit, widget-scoped dependency injection.
