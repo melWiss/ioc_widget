@@ -17,6 +17,20 @@ class DisposableClass {
   }
 }
 
+class TestNotifier extends ChangeNotifier {
+  int value = 0;
+  int disposeCount = 0;
+  void increment() {
+    value++;
+    notifyListeners();
+  }
+  @override
+  void dispose() {
+    disposeCount++;
+    super.dispose();
+  }
+}
+
 void main() {
   setUp(() {
     TestClass.instanceCount = 0;
@@ -221,5 +235,98 @@ void main() {
     );
     await tester.pumpWidget(const SizedBox.shrink()); // Unmount
     expect(DisposableClass.disposeCount, 0);
+  });
+
+  testWidgets('InjectScopedNotifier rebuilds on ChangeNotifier notifyListeners', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: InjectableWidget<TestNotifier>(
+          factory: (_) => TestNotifier(),
+          child: InjectScopedNotifier<TestNotifier>(
+            builder: (ctx, notifier) => Column(
+              children: [
+                Text('Value: ${notifier.value}', key: const Key('value')),
+                ElevatedButton(
+                  key: const Key('inc'),
+                  onPressed: notifier.increment,
+                  child: const Text('Increment'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(find.text('Value: 0'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('inc')));
+    await tester.pump();
+    expect(find.text('Value: 1'), findsOneWidget);
+  });
+
+  testWidgets('InjectScopedNotifier disposes ChangeNotifier on widget dispose', (tester) async {
+    final notifier = TestNotifier();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: InjectableWidget<TestNotifier>(
+          factory: (_) => notifier,
+          child: InjectScopedNotifier<TestNotifier>(
+            builder: (ctx, n) => const Placeholder(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+    expect(notifier.disposeCount, 1);
+  });
+
+  testWidgets('InjectScopedNotifier provides the same instance via context.get within scope', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: InjectableWidget<TestNotifier>(
+          factory: (_) => TestNotifier(),
+          child: InjectScopedNotifier<TestNotifier>(
+            builder: (ctx, notifier) {
+              final fromContext = ctx.get<TestNotifier>();
+              return Text('Same: ${identical(notifier, fromContext)}', key: const Key('same'));
+            },
+          ),
+        ),
+      ),
+    );
+    expect(find.text('Same: true'), findsOneWidget);
+  });
+
+  testWidgets('InjectScopedNotifier creates a new instance after widget is disposed and rebuilt', (tester) async {
+    Widget buildTest() => MaterialApp(
+      home: InjectableWidget<TestNotifier>(
+        factory: (_) => TestNotifier(),
+        child: InjectScopedNotifier<TestNotifier>(
+          builder: (ctx, notifier) => Text('Hash: ${notifier.hashCode}', key: const Key('hash')),
+        ),
+      ),
+    );
+    await tester.pumpWidget(buildTest());
+    final hash1 = (tester.widget(find.byKey(const Key('hash'))) as Text).data;
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(buildTest());
+    final hash2 = (tester.widget(find.byKey(const Key('hash'))) as Text).data;
+    expect(hash1 != hash2, isTrue);
+  });
+
+  testWidgets('InjectScopedNotifier does not rebuild when notifier does not notify', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: InjectableWidget<TestNotifier>(
+          factory: (_) => TestNotifier(),
+          child: InjectScopedNotifier<TestNotifier>(
+            builder: (ctx, notifier) => Text('Value: ${notifier.value}', key: const Key('value')),
+          ),
+        ),
+      ),
+    );
+    expect(find.text('Value: 0'), findsOneWidget);
+    // No notifyListeners called, so value should remain 0
+    await tester.pump();
+    expect(find.text('Value: 0'), findsOneWidget);
   });
 }
