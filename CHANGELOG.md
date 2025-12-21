@@ -1,3 +1,8 @@
+## 2.0.1
+### Added & Fixed
+- Added a `value` parameter to both `InjectScopedDependency` and `InjectScopedNotifier` to allow injecting an external value or notifier instance that will NOT be disposed by the widget. This makes it easy to provide externally managed dependencies for testing or advanced scenarios.
+- Fixed disposal behavior: If `value` is provided, the widget will not dispose the instance. If `value` is not provided, the instance created by the IoC container will be disposed automatically when the widget is removed from the tree.
+
 ## 2.0.0
 ### Breaking Changes
 - Renamed `IocConsumer` widget to `InjectScopedDependency` for clarity and to avoid confusion with Provider's Consumer.

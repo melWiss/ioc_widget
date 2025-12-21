@@ -36,7 +36,7 @@ dependencies:
 - **LazySingletonWidget**: Provides a single instance of a dependency for the subtree, created on first use.
 - **MultiIocWidget**: Register multiple dependencies at once.
 - **InjectScopedDependency**: Injects dependencies in context widget tree and handles its dispose callback. (Renamed from IocConsumer in v2.0.0)
-- **InjectScopedNotifier**: Injects a ChangeNotifier from the IoC container, rebuilds when the notifier updates, and disposes it automatically when removed from the tree.
+- **InjectScopedNotifier**: Injects a ChangeNotifier from the IoC container, rebuilds when the notifier updates, and disposes it automatically when removed from the tree. Use the `value` parameter to provide an external notifier (no disposal).
 - **context.get<T>()**: Retrieve a dependency of type `T` from the nearest provider.
 
 ## Usage Example
@@ -244,6 +244,36 @@ class PageNotifier extends StatelessWidget {
     );
   }
 }
+
+class PageNotifierExternal extends StatelessWidget {
+  const PageNotifierExternal({super.key});
+  @override
+  Widget build(BuildContext context) {
+    final externalNotifier = CounterNotifier();
+    return Scaffold(
+      appBar: AppBar(title: const Text('Page Notifier - InjectScopedNotifier (external value)')),
+      body: Center(
+        child: InjectScopedNotifier<CounterNotifier>(
+          value: externalNotifier,
+          builder: (ctx, notifier) => Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Counter value: ${notifier.value}', style: const TextStyle(fontSize: 24)),
+              ElevatedButton(
+                onPressed: notifier.increment,
+                child: const Text('Increment'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Back'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 ```
 
 ## API Reference
@@ -261,7 +291,9 @@ Registers multiple dependencies at once. Useful for grouping related dependencie
 Widget that exposes a dependency in its context widget tree as a singleton and gets disposed when its parent is disposed. (Renamed from IocConsumer in v2.0.0)
 
 ### InjectScopedNotifier<T extends ChangeNotifier>
-Widget that injects a ChangeNotifier from the IoC container, rebuilds when the notifier updates, and disposes it automatically when removed from the tree. The notifier instance is a singleton within the widget scope and changes when the widget is disposed/recreated.
+Widget that injects a ChangeNotifier from the IoC container, rebuilds when the notifier updates, and disposes it automatically when removed from the tree. The notifier instance is a singleton within the widget scope and will be recreated if the widget is disposed and rebuilt.
+
+- Use the `value` parameter to provide an external notifier (no disposal).
 
 ### context.get<T>()
 Extension on `BuildContext` to retrieve a dependency of type `T` from the nearest provider.
