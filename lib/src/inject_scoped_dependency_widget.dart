@@ -25,8 +25,8 @@ class InjectScopedDependency<T> extends StatefulWidget {
 }
 
 class _InjectScopedDependencyState<T> extends State<InjectScopedDependency<T>> {
-  late InternalIocInheritedWidget<T> dependency;
-  late T value;
+  InternalIocInheritedWidget<T>? dependency;
+  T? value;
 
   @override
   void initState() {
@@ -34,6 +34,10 @@ class _InjectScopedDependencyState<T> extends State<InjectScopedDependency<T>> {
     if (widget.value != null) {
       value = widget.value as T;
     }
+    assert(
+      dependency != null || value != null,
+      'Neither value is provided or <$T> is registered within the widget tree dependency container.',
+    );
     super.initState();
   }
 
@@ -41,9 +45,9 @@ class _InjectScopedDependencyState<T> extends State<InjectScopedDependency<T>> {
   Widget build(BuildContext context) {
     if (widget.value == null) {
       return LazySingletonWidget<T>(
-        factory: dependency.factory,
+        factory: dependency!.factory,
         dispose: () {
-          dependency.dispose?.call();
+          dependency!.dispose?.call();
           if (value is ChangeNotifier) {
             try {
               (value as ChangeNotifier).dispose();
@@ -52,17 +56,15 @@ class _InjectScopedDependencyState<T> extends State<InjectScopedDependency<T>> {
         },
         child: Builder(
           builder: (ctx) {
-            value = ctx.get();
+            value = ctx.get<T>();
             return widget.builder(ctx);
           },
         ),
       );
     }
     return LazySingletonWidget<T>(
-        factory: (_) => value,
-        child: Builder(
-          builder: widget.builder,
-        ),
-      );
+      factory: (_) => value!,
+      child: Builder(builder: widget.builder),
+    );
   }
 }

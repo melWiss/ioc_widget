@@ -10,4 +10,9 @@ extension IocGetExtension on BuildContext {
   /// in the widget tree.
   InternalIocInheritedWidget<T> getDependencyContainer<T>() =>
       IocWidget.containerOf(this);
+
+  /// Retrieves the dependency container of nullable type [T] from the nearest IoC provider
+  /// in the widget tree.
+  InternalIocInheritedWidget<T>? maybeGetDependencyContainer<T>() =>
+      IocWidget.maybeContainerOf(this);
 }
