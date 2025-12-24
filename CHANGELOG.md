@@ -1,3 +1,8 @@
+## 2.0.2
+### Bug fixes
+- fixed late instance bug
+- fixed variable nullability type not registered issue
+
 ## 2.0.1
 ### Added & Fixed
 - Added a `value` parameter to both `InjectScopedDependency` and `InjectScopedNotifier` to allow injecting an external value or notifier instance that will NOT be disposed by the widget. This makes it easy to provide externally managed dependencies for testing or advanced scenarios.
