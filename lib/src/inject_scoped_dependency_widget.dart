@@ -30,7 +30,7 @@ class _InjectScopedDependencyState<T extends Object> extends State<InjectScopedD
 
   @override
   void initState() {
-    dependency = context.getDependencyContainer<T>();
+    dependency = context.maybeGetDependencyContainer<T>();
     if (widget.value != null) {
       value = widget.value as T;
     }

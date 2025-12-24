@@ -1,3 +1,7 @@
+## 2.0.3
+### Bug fixes
+- used maybeGetDependencyContainer instead of getDependencyContainer
+
 ## 2.0.2
 ### Bug fixes
 - fixed late instance bug
