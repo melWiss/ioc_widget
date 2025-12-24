@@ -57,7 +57,7 @@ class IocWidget<T> extends StatefulWidget {
   State<IocWidget<T>> createState() => _IocWidgetState<T>();
 
   /// Retrieves a dependency of type [T] from the nearest IoC provider in the widget tree, or null if not found.
-  static T? maybeOf<T>(BuildContext context) {
+  static T? maybeOf<T extends Object>(BuildContext context) {
     InternalIocInheritedWidget<T>? dependencyWidget =
         context
                 .getElementForInheritedWidgetOfExactType<
@@ -72,7 +72,7 @@ class IocWidget<T> extends StatefulWidget {
   /// Retrieves a dependency of type [T] from the nearest IoC provider in the widget tree.
   ///
   /// Throws an assertion error if the dependency is not found.
-  static T of<T>(BuildContext context) {
+  static T of<T extends Object>(BuildContext context) {
     T? dependency = maybeOf<T>(context);
     assert(
       dependency != null,
@@ -82,7 +82,7 @@ class IocWidget<T> extends StatefulWidget {
   }
 
   /// Retrieves the nearest [InternalIocInheritedWidget] container of type [T], or null if not found.
-  static InternalIocInheritedWidget<T>? maybeContainerOf<T>(
+  static InternalIocInheritedWidget<T>? maybeContainerOf<T extends Object>(
     BuildContext context,
   ) {
     return context
@@ -96,7 +96,7 @@ class IocWidget<T> extends StatefulWidget {
   /// Retrieves the nearest [InternalIocInheritedWidget] container of type [T].
   ///
   /// Throws an assertion error if the container is not found.
-  static InternalIocInheritedWidget<T> containerOf<T>(BuildContext context) {
+  static InternalIocInheritedWidget<T> containerOf<T extends Object>(BuildContext context) {
     InternalIocInheritedWidget<T>? nullableContainer = maybeContainerOf(
       context,
     );

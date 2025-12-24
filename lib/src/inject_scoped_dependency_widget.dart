@@ -7,7 +7,7 @@ import 'package:ioc_widget/src/internal_ioc_widgets.dart';
 /// The [builder] function provides the [BuildContext] to build the widget subtree.
 ///
 /// Use [value] to provide an external value (no disposal).
-class InjectScopedDependency<T> extends StatefulWidget {
+class InjectScopedDependency<T extends Object> extends StatefulWidget {
   /// The builder function that receives the [BuildContext].
   final Widget Function(BuildContext context) builder;
 
@@ -24,7 +24,7 @@ class InjectScopedDependency<T> extends StatefulWidget {
       _InjectScopedDependencyState<T>();
 }
 
-class _InjectScopedDependencyState<T> extends State<InjectScopedDependency<T>> {
+class _InjectScopedDependencyState<T extends Object> extends State<InjectScopedDependency<T>> {
   InternalIocInheritedWidget<T>? dependency;
   T? value;
 
