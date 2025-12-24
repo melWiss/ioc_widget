@@ -24,6 +24,7 @@ class TestNotifier extends ChangeNotifier {
     value++;
     notifyListeners();
   }
+
   @override
   void dispose() {
     disposeCount++;
@@ -38,17 +39,42 @@ void main() {
   });
 
   group('IoC Widget Package', () {
-    testWidgets('InjectableWidget provides a new instance each time', (tester) async {
+    testWidgets('Get injected dependency using nullable variable', (tester) async {
       await tester.pumpWidget(const MyApp());
       // Go to PageA
       expect(find.text('Page A - InjectableWidget'), findsOneWidget);
       final context = tester.element(find.byType(PageA));
       final a1 = context.get<ClassA>();
       final a2 = context.get<ClassA>();
-      expect(a1 == a2, isFalse, reason: 'InjectableWidget should provide a new instance each time');
+      expect(
+        a1 == a2,
+        isFalse,
+        reason: 'InjectableWidget should provide a new instance each time',
+      );
+
+      ClassA? a3;
+      a3 = context.get();
+      expect(a3, isNotNull);
+    });
+    testWidgets('InjectableWidget provides a new instance each time', (
+      tester,
+    ) async {
+      await tester.pumpWidget(const MyApp());
+      // Go to PageA
+      expect(find.text('Page A - InjectableWidget'), findsOneWidget);
+      final context = tester.element(find.byType(PageA));
+      final a1 = context.get<ClassA>();
+      final a2 = context.get<ClassA>();
+      expect(
+        a1 == a2,
+        isFalse,
+        reason: 'InjectableWidget should provide a new instance each time',
+      );
     });
 
-    testWidgets('LazySingletonWidget provides the same instance', (tester) async {
+    testWidgets('LazySingletonWidget provides the same instance', (
+      tester,
+    ) async {
       await tester.pumpWidget(const MyApp());
       // Go to PageB
       await tester.tap(find.text('Go to Page B'));
@@ -57,10 +83,16 @@ void main() {
       final context = tester.element(find.byType(PageB));
       final b1 = context.get<ClassB>();
       final b2 = context.get<ClassB>();
-      expect(b1, same(b2), reason: 'LazySingletonWidget should provide the same instance');
+      expect(
+        b1,
+        same(b2),
+        reason: 'LazySingletonWidget should provide the same instance',
+      );
     });
 
-    testWidgets('LazySingletonWidget dependencies are resolved correctly', (tester) async {
+    testWidgets('LazySingletonWidget dependencies are resolved correctly', (
+      tester,
+    ) async {
       await tester.pumpWidget(const MyApp());
       // Go to PageB
       await tester.tap(find.text('Go to Page B'));
@@ -90,21 +122,24 @@ void main() {
       expect(contextC.get<ClassC>(), isA<ClassC>());
     });
 
-    testWidgets('InjectScopedDependency provides dependency in builder context', (tester) async {
-      await tester.pumpWidget(const MyApp());
-      // Go to PageB
-      await tester.tap(find.text('Go to Page B'));
-      await tester.pumpAndSettle();
-      // Go to PageC
-      await tester.tap(find.text('Go to Page C'));
-      await tester.pumpAndSettle();
-      // Find the InjectScopedDependency builder context
-      final consumerFinder = find.byType(InjectScopedDependency<ClassA>);
-      expect(consumerFinder, findsOneWidget);
-      final ctx = tester.element(consumerFinder);
-      expect(ctx.get<ClassA>(), isA<ClassA>());
-      expect(ctx.get<ClassC>(), isA<ClassC>());
-    });
+    testWidgets(
+      'InjectScopedDependency provides dependency in builder context',
+      (tester) async {
+        await tester.pumpWidget(const MyApp());
+        // Go to PageB
+        await tester.tap(find.text('Go to Page B'));
+        await tester.pumpAndSettle();
+        // Go to PageC
+        await tester.tap(find.text('Go to Page C'));
+        await tester.pumpAndSettle();
+        // Find the InjectScopedDependency builder context
+        final consumerFinder = find.byType(InjectScopedDependency<ClassA>);
+        expect(consumerFinder, findsOneWidget);
+        final ctx = tester.element(consumerFinder);
+        expect(ctx.get<ClassA>(), isA<ClassA>());
+        expect(ctx.get<ClassC>(), isA<ClassC>());
+      },
+    );
 
     testWidgets('Can navigate between all pages and back', (tester) async {
       await tester.pumpWidget(const MyApp());
@@ -127,7 +162,9 @@ void main() {
     });
   });
 
-  testWidgets('InjectableWidget creates a new instance every time', (tester) async {
+  testWidgets('InjectableWidget creates a new instance every time', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: InjectableWidget<TestClass>(
@@ -163,7 +200,9 @@ void main() {
     expect(TestClass.instanceCount, 1);
   });
 
-  testWidgets('InjectScopedDependency exposes a new instance in its scope', (tester) async {
+  testWidgets('InjectScopedDependency exposes a new instance in its scope', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: InjectableWidget<TestClass>(
@@ -179,7 +218,7 @@ void main() {
                   return Text('${a.hashCode}-${b.hashCode}-${c.hashCode}');
                 },
               );
-            }
+            },
           ),
         ),
       ),
@@ -188,26 +227,31 @@ void main() {
     expect(TestClass.instanceCount, 2);
   });
 
-  testWidgets('InjectScopedDependency exposes the same singleton instance in its scope', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: LazySingletonWidget<TestClass>(
-          factory: (_) => TestClass(),
-          child: InjectScopedDependency<TestClass>(
-            builder: (ctx) {
-              final a = ctx.get<TestClass>();
-              final b = ctx.get<TestClass>();
-              return Text('${a.hashCode}-${b.hashCode}');
-            },
+  testWidgets(
+    'InjectScopedDependency exposes the same singleton instance in its scope',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: LazySingletonWidget<TestClass>(
+            factory: (_) => TestClass(),
+            child: InjectScopedDependency<TestClass>(
+              builder: (ctx) {
+                final a = ctx.get<TestClass>();
+                final b = ctx.get<TestClass>();
+                return Text('${a.hashCode}-${b.hashCode}');
+              },
+            ),
           ),
         ),
-      ),
-    );
-    // Only one instance should be created
-    expect(TestClass.instanceCount, 1);
-  });
+      );
+      // Only one instance should be created
+      expect(TestClass.instanceCount, 1);
+    },
+  );
 
-  testWidgets('Dispose function is called for LazySingletonWidget', (tester) async {
+  testWidgets('Dispose function is called for LazySingletonWidget', (
+    tester,
+  ) async {
     final disposable = DisposableClass();
     await tester.pumpWidget(
       MaterialApp(
@@ -222,7 +266,9 @@ void main() {
     expect(DisposableClass.disposeCount, 1);
   });
 
-  testWidgets('Dispose function is not called for InjectableWidget', (tester) async {
+  testWidgets('Dispose function is not called for InjectableWidget', (
+    tester,
+  ) async {
     final disposable = DisposableClass();
     await tester.pumpWidget(
       MaterialApp(
@@ -237,96 +283,119 @@ void main() {
     expect(DisposableClass.disposeCount, 0);
   });
 
-  testWidgets('InjectScopedNotifier rebuilds on ChangeNotifier notifyListeners', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: InjectableWidget<TestNotifier>(
-          factory: (_) => TestNotifier(),
-          child: InjectScopedNotifier<TestNotifier>(
-            builder: (ctx, notifier) => Column(
-              children: [
-                Text('Value: ${notifier.value}', key: const Key('value')),
-                ElevatedButton(
-                  key: const Key('inc'),
-                  onPressed: notifier.increment,
-                  child: const Text('Increment'),
-                ),
-              ],
+  testWidgets(
+    'InjectScopedNotifier rebuilds on ChangeNotifier notifyListeners',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: InjectableWidget<TestNotifier>(
+            factory: (_) => TestNotifier(),
+            child: InjectScopedNotifier<TestNotifier>(
+              builder:
+                  (ctx, notifier) => Column(
+                    children: [
+                      Text('Value: ${notifier.value}', key: const Key('value')),
+                      ElevatedButton(
+                        key: const Key('inc'),
+                        onPressed: notifier.increment,
+                        child: const Text('Increment'),
+                      ),
+                    ],
+                  ),
             ),
           ),
         ),
-      ),
-    );
-    expect(find.text('Value: 0'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('inc')));
-    await tester.pump();
-    expect(find.text('Value: 1'), findsOneWidget);
-  });
+      );
+      expect(find.text('Value: 0'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('inc')));
+      await tester.pump();
+      expect(find.text('Value: 1'), findsOneWidget);
+    },
+  );
 
-  testWidgets('InjectScopedNotifier disposes ChangeNotifier on widget dispose', (tester) async {
-    final notifier = TestNotifier();
-    await tester.pumpWidget(
-      MaterialApp(
-        home: InjectableWidget<TestNotifier>(
-          factory: (_) => notifier,
-          child: InjectScopedNotifier<TestNotifier>(
-            builder: (ctx, n) => const Placeholder(),
+  testWidgets(
+    'InjectScopedNotifier disposes ChangeNotifier on widget dispose',
+    (tester) async {
+      final notifier = TestNotifier();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: InjectableWidget<TestNotifier>(
+            factory: (_) => notifier,
+            child: InjectScopedNotifier<TestNotifier>(
+              builder: (ctx, n) => const Placeholder(),
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pumpWidget(const SizedBox.shrink());
-    expect(notifier.disposeCount, 1);
-  });
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+      expect(notifier.disposeCount, 1);
+    },
+  );
 
-  testWidgets('InjectScopedNotifier provides the same instance via context.get within scope', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: InjectableWidget<TestNotifier>(
-          factory: (_) => TestNotifier(),
-          child: InjectScopedNotifier<TestNotifier>(
-            builder: (ctx, notifier) {
-              final fromContext = ctx.get<TestNotifier>();
-              return Text('Same: ${identical(notifier, fromContext)}', key: const Key('same'));
-            },
+  testWidgets(
+    'InjectScopedNotifier provides the same instance via context.get within scope',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: InjectableWidget<TestNotifier>(
+            factory: (_) => TestNotifier(),
+            child: InjectScopedNotifier<TestNotifier>(
+              builder: (ctx, notifier) {
+                final fromContext = ctx.get<TestNotifier>();
+                return Text(
+                  'Same: ${identical(notifier, fromContext)}',
+                  key: const Key('same'),
+                );
+              },
+            ),
           ),
         ),
-      ),
-    );
-    expect(find.text('Same: true'), findsOneWidget);
-  });
+      );
+      expect(find.text('Same: true'), findsOneWidget);
+    },
+  );
 
-  testWidgets('InjectScopedNotifier creates a new instance after widget is disposed and rebuilt', (tester) async {
-    Widget buildTest() => MaterialApp(
-      home: InjectableWidget<TestNotifier>(
-        factory: (_) => TestNotifier(),
-        child: InjectScopedNotifier<TestNotifier>(
-          builder: (ctx, notifier) => Text('Hash: ${notifier.hashCode}', key: const Key('hash')),
-        ),
-      ),
-    );
-    await tester.pumpWidget(buildTest());
-    final hash1 = (tester.widget(find.byKey(const Key('hash'))) as Text).data;
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pumpWidget(buildTest());
-    final hash2 = (tester.widget(find.byKey(const Key('hash'))) as Text).data;
-    expect(hash1 != hash2, isTrue);
-  });
-
-  testWidgets('InjectScopedNotifier does not rebuild when notifier does not notify', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
+  testWidgets(
+    'InjectScopedNotifier creates a new instance after widget is disposed and rebuilt',
+    (tester) async {
+      Widget buildTest() => MaterialApp(
         home: InjectableWidget<TestNotifier>(
           factory: (_) => TestNotifier(),
           child: InjectScopedNotifier<TestNotifier>(
-            builder: (ctx, notifier) => Text('Value: ${notifier.value}', key: const Key('value')),
+            builder:
+                (ctx, notifier) =>
+                    Text('Hash: ${notifier.hashCode}', key: const Key('hash')),
           ),
         ),
-      ),
-    );
-    expect(find.text('Value: 0'), findsOneWidget);
-    // No notifyListeners called, so value should remain 0
-    await tester.pump();
-    expect(find.text('Value: 0'), findsOneWidget);
-  });
+      );
+      await tester.pumpWidget(buildTest());
+      final hash1 = (tester.widget(find.byKey(const Key('hash'))) as Text).data;
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(buildTest());
+      final hash2 = (tester.widget(find.byKey(const Key('hash'))) as Text).data;
+      expect(hash1 != hash2, isTrue);
+    },
+  );
+
+  testWidgets(
+    'InjectScopedNotifier does not rebuild when notifier does not notify',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: InjectableWidget<TestNotifier>(
+            factory: (_) => TestNotifier(),
+            child: InjectScopedNotifier<TestNotifier>(
+              builder:
+                  (ctx, notifier) =>
+                      Text('Value: ${notifier.value}', key: const Key('value')),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('Value: 0'), findsOneWidget);
+      // No notifyListeners called, so value should remain 0
+      await tester.pump();
+      expect(find.text('Value: 0'), findsOneWidget);
+    },
+  );
 }
