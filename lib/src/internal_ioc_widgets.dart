@@ -7,8 +7,10 @@ import 'package:flutter/material.dart';
 class InternalIocInheritedWidget<T> extends InheritedWidget {
   /// The factory function to create the dependency.
   final T Function(BuildContext context) factory;
+
   /// Optional dispose callback for cleaning up the dependency.
   final void Function()? dispose;
+
   /// Whether the dependency should be a lazy singleton.
   final bool isLazySingleton;
   InternalIocInheritedWidget({
@@ -37,10 +39,13 @@ class InternalIocInheritedWidget<T> extends InheritedWidget {
 class IocWidget<T> extends StatefulWidget {
   /// The factory function to create the dependency.
   final T Function(BuildContext context) factory;
+
   /// Optional dispose callback for cleaning up the dependency.
   final Function()? dispose;
+
   /// The child widget subtree that can access the dependency.
   final Widget? child;
+
   /// Whether the dependency should be a lazy singleton.
   final bool isLazySingleton;
 
@@ -96,7 +101,9 @@ class IocWidget<T> extends StatefulWidget {
   /// Retrieves the nearest [InternalIocInheritedWidget] container of type [T].
   ///
   /// Throws an assertion error if the container is not found.
-  static InternalIocInheritedWidget<T> containerOf<T extends Object>(BuildContext context) {
+  static InternalIocInheritedWidget<T> containerOf<T extends Object>(
+    BuildContext context,
+  ) {
     InternalIocInheritedWidget<T>? nullableContainer = maybeContainerOf(
       context,
     );
@@ -126,6 +133,7 @@ class _IocWidgetState<T> extends State<IocWidget<T>> {
     }
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     if (widget.child == null) return SizedBox.shrink();
@@ -144,6 +152,7 @@ class _IocWidgetState<T> extends State<IocWidget<T>> {
 class MultiIocWidget extends StatelessWidget {
   /// The list of IoC dependency widgets to provide.
   final List<IocWidget> dependencies;
+
   /// The child widget subtree that can access the dependencies.
   final Widget child;
 
