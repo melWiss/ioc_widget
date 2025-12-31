@@ -1,6 +1,6 @@
 name: ioc_widget
 description: "A simple, flexible, and testable dependency injection (DI) solution for Flutter, inspired by the best of both the Provider and get_it packages. Supports widget-level DI, transient and singleton strategies, and is ideal for scalable, testable, and maintainable Flutter apps."
-version: 2.0.3
+version: 2.0.3-dev1
 homepage: https://oussama-maatallah.web.app/blog/ioc_widget
 repository: https://github.com/melWiss/ioc_widget
 

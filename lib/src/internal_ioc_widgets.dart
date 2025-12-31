@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 
 /// An [InheritedWidget] that holds a dependency of type [T] for the IoC system.
@@ -13,20 +15,21 @@ class InternalIocInheritedWidget<T> extends InheritedWidget {
 
   /// Whether the dependency should be a lazy singleton.
   final bool isLazySingleton;
+
+  /// The widget state that is holding the value/factory of the dependency.
+  final _IocWidgetState<T> state;
   InternalIocInheritedWidget({
     required this.factory,
     required super.child,
+    required this.state,
     this.isLazySingleton = false,
     this.dispose,
     super.key,
   });
 
-  T? _value;
-
   /// Returns the dependency instance, creating it if necessary.
   T get(BuildContext context) {
-    if (isLazySingleton) return _value ??= factory(context);
-    return factory(context);
+    return state.getValue(context);
   }
 
   @override
@@ -126,12 +129,20 @@ class IocWidget<T> extends StatefulWidget {
 }
 
 class _IocWidgetState<T> extends State<IocWidget<T>> {
+  T? _value;
   @override
   void dispose() {
     if (widget.isLazySingleton) {
       widget.dispose?.call();
     }
     super.dispose();
+  }
+
+  T getValue(BuildContext context) {
+    if (widget.isLazySingleton) {
+      return _value ??= widget.factory(context);
+    }
+    return widget.factory(context);
   }
 
   @override
@@ -141,6 +152,7 @@ class _IocWidgetState<T> extends State<IocWidget<T>> {
       factory: widget.factory,
       isLazySingleton: widget.isLazySingleton,
       dispose: widget.dispose,
+      state: this,
       child: widget.child!,
     );
   }
