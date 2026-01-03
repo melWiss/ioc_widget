@@ -1,3 +1,7 @@
+## 2.0.4
+### Bug fixes
+- trying storing the dependency value within the StatefulWidget's state
+
 ## 2.0.3
 ### Bug fixes
 - used maybeGetDependencyContainer instead of getDependencyContainer

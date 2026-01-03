@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 
 /// An [InheritedWidget] that holds a dependency of type [T] for the IoC system.
@@ -7,24 +9,27 @@ import 'package:flutter/material.dart';
 class InternalIocInheritedWidget<T> extends InheritedWidget {
   /// The factory function to create the dependency.
   final T Function(BuildContext context) factory;
+
   /// Optional dispose callback for cleaning up the dependency.
   final void Function()? dispose;
+
   /// Whether the dependency should be a lazy singleton.
   final bool isLazySingleton;
+
+  /// The widget state that is holding the value/factory of the dependency.
+  final _IocWidgetState<T> state;
   InternalIocInheritedWidget({
     required this.factory,
     required super.child,
+    required this.state,
     this.isLazySingleton = false,
     this.dispose,
     super.key,
   });
 
-  T? _value;
-
   /// Returns the dependency instance, creating it if necessary.
   T get(BuildContext context) {
-    if (isLazySingleton) return _value ??= factory(context);
-    return factory(context);
+    return state.getValue(context);
   }
 
   @override
@@ -37,10 +42,13 @@ class InternalIocInheritedWidget<T> extends InheritedWidget {
 class IocWidget<T> extends StatefulWidget {
   /// The factory function to create the dependency.
   final T Function(BuildContext context) factory;
+
   /// Optional dispose callback for cleaning up the dependency.
   final Function()? dispose;
+
   /// The child widget subtree that can access the dependency.
   final Widget? child;
+
   /// Whether the dependency should be a lazy singleton.
   final bool isLazySingleton;
 
@@ -96,7 +104,9 @@ class IocWidget<T> extends StatefulWidget {
   /// Retrieves the nearest [InternalIocInheritedWidget] container of type [T].
   ///
   /// Throws an assertion error if the container is not found.
-  static InternalIocInheritedWidget<T> containerOf<T extends Object>(BuildContext context) {
+  static InternalIocInheritedWidget<T> containerOf<T extends Object>(
+    BuildContext context,
+  ) {
     InternalIocInheritedWidget<T>? nullableContainer = maybeContainerOf(
       context,
     );
@@ -119,6 +129,7 @@ class IocWidget<T> extends StatefulWidget {
 }
 
 class _IocWidgetState<T> extends State<IocWidget<T>> {
+  T? _value;
   @override
   void dispose() {
     if (widget.isLazySingleton) {
@@ -126,6 +137,14 @@ class _IocWidgetState<T> extends State<IocWidget<T>> {
     }
     super.dispose();
   }
+
+  T getValue(BuildContext context) {
+    if (widget.isLazySingleton) {
+      return _value ??= widget.factory(context);
+    }
+    return widget.factory(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.child == null) return SizedBox.shrink();
@@ -133,6 +152,7 @@ class _IocWidgetState<T> extends State<IocWidget<T>> {
       factory: widget.factory,
       isLazySingleton: widget.isLazySingleton,
       dispose: widget.dispose,
+      state: this,
       child: widget.child!,
     );
   }
@@ -144,6 +164,7 @@ class _IocWidgetState<T> extends State<IocWidget<T>> {
 class MultiIocWidget extends StatelessWidget {
   /// The list of IoC dependency widgets to provide.
   final List<IocWidget> dependencies;
+
   /// The child widget subtree that can access the dependencies.
   final Widget child;
 
