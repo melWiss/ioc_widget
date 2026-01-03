@@ -1,4 +1,4 @@
-## 2.0.4-dev1
+## 2.0.4
 ### Bug fixes
 - trying storing the dependency value within the StatefulWidget's state
 
